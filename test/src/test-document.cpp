@@ -261,3 +261,19 @@ function helper() {
     print("http://www.sz.js.cn")```\h
 }    )");
 }
+
+TEST_CASE("raw html escape", "[document]") {
+    gfm::Parser document;
+
+    stringstream ss{R"(&amp; &amp &10 &#10;
+# hello
+#hello
+)"};
+    auto p = document.from(ss);
+
+    REQUIRE (p.size() == 3);
+    
+    auto x = p.children(0);
+    REQUIRE(x.size() == 10);
+    REQUIRE(x.children(0).tag() == "raw");
+}

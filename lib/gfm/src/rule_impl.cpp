@@ -1,13 +1,27 @@
 #include <rule/AtxHeading.h>
 #include <rule/Codeblock.h>
+#include <rule/HtmlEscape.h>
 #include <rule/Img.h>
 #include <rule/Link.h>
 #include <rule/Paragraph.h>
 #include <utils.h>
+#include <algorithm>
+#include <cctype>
 #include <string>
 
 namespace gfm {
 namespace rule {
+bool is_all_digit(std::string str) {
+    bool r = false;
+
+    for (auto &c : str) {
+        if (!std::isdigit(c)) break;
+        r = true;
+    }
+
+    return r;
+}
+
 ts::result_t AtxHeading::parse(ts::Token &in, ts::AstNode &parent) const {
     // node.extends("level", std::to_string(in.str().size()));
     auto str = in.str();
@@ -43,6 +57,8 @@ ts::result_t AtxHeading::parse(ts::Token &in, ts::AstNode &parent) const {
                         in.pop_env();
                 }
                 node.children("text", in.str());
+                
+                r = ts::result_t::ok;
             } else if (r == ts::result_t::jumpout)
                 break;
 
@@ -81,8 +97,7 @@ ts::result_t Codeblock::parse(ts::Token &in, ts::AstNode &parent) const {
         if (in.token() == ts::token_t::endl) {
             in.push_env();
             in.read();
-            if (in.token() == ts::token_t::blank)
-                in.read();
+            if (in.token() == ts::token_t::blank) in.read();
             if (in.token() == ts::token_t::punctation &&
                 in.str().front() == '`' && in.str().size() >= 3)
                 break;
@@ -99,6 +114,39 @@ ts::result_t Codeblock::parse(ts::Token &in, ts::AstNode &parent) const {
     return ts::result_t::ok;
 }
 
+ts::result_t HtmlEscape::parse(ts::Token &in, ts::AstNode &parent) const {
+    in.push_env();
+    in.read();
+    if (in.has_puncation("#")) {
+        in.read();
+        if (in.token() == ts::token_t::word) {
+            auto str = in.str();
+            if (is_all_digit(str)) {
+                in.read();
+                if (in.has_puncation(";")) {
+                    parent.children("raw", "&#" + str + ";");
+                    in.clean_env();
+
+                    return ts::result_t::ok;
+                }
+            }
+        }
+    } else if (in.token() == ts::token_t::word) {
+        auto str = in.str();
+        in.read();
+
+        if (in.has_puncation(";")) {
+            parent.children("raw", "&" + str + ";");
+            in.clean_env();
+
+            return ts::result_t::ok;
+        }
+    }
+
+    in.pop_env();
+    return ts::result_t::failure;
+}
+
 ts::result_t Paragraph::parse(ts::Token &in, ts::AstNode &parent) const {
     ts::AstNode node{&parent, tag()};
     ts::result_t r = ts::result_t::ok;
@@ -109,8 +157,10 @@ ts::result_t Paragraph::parse(ts::Token &in, ts::AstNode &parent) const {
 
         if (r == ts::result_t::failure)
             node.children("text", in.str());
-        else if (r == ts::result_t::jumpout)
+        else if (r == ts::result_t::jumpout) {
+            in.unread();
             break;
+        }
 
         fol = (r == ts::result_t::skip
                    ? fol
