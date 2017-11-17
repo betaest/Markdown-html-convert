@@ -34,7 +34,7 @@ std::string render(const ts::AstNode &root) {
 std::string Render::render(const ts::AstNode &root) {
     std::stringstream str;
 
-    str << R"(<!doctype><html><script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/go.min.js"></script></html><body>)";
+    str << R"(<!doctype><html><script src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/go.min.js"></script></html><body>)";
     str << html::render(root);
     str << "</body></html>";
 

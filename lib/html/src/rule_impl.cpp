@@ -1,9 +1,9 @@
+#include <html_render.h>
 #include <rule/CodeBlock.h>
 #include <rule/Head.h>
 #include <rule/raw.h>
 #include <rule/text.h>
 #include <sstream>
-#include <html_render.h>
 
 using namespace ts;
 namespace html {
@@ -27,7 +27,7 @@ std::string CodeBlock::render(const AstNode &p) const {
             str << ">";
 
         auto text = p.children(0);
-        
+
         str << text.extends("text") << "</code></pre>";
     }
 

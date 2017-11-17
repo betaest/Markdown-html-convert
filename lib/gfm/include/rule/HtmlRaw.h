@@ -8,8 +8,7 @@ class HtmlRaw : public core {
     std::string tag() const override { return ""; }
     paragraph_t paragraph_type() const { return paragraph_t::anyway; }
     bool matched(bool beginl, const ts::Token &in) const override {
-        return beginl && in.token() == ts::token_t::punctation &&
-               in.str().front() == '#' && in.str().size() <= 6;
+        return false;
     }
     ts::result_t parse(ts::Token &in, ts::AstNode &parent) const override {
         return ts::result_t::ok;
